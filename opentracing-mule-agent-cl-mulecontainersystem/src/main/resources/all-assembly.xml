@@ -1,0 +1,30 @@
+<assembly xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns="http://maven.apache.org/ASSEMBLY/2.0.0"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
+    <id>all-jar</id>
+    <formats>
+        <format>jar</format>
+    </formats>
+
+    <includeBaseDirectory>false</includeBaseDirectory>
+
+    <dependencySets>
+        <dependencySet>
+            <unpack>true</unpack>
+            <useTransitiveDependencies>false</useTransitiveDependencies>
+        </dependencySet>
+    </dependencySets>
+
+    <containerDescriptorHandlers>
+        <containerDescriptorHandler>
+            <handlerName>metaInf-services</handlerName>
+        </containerDescriptorHandler>
+        <containerDescriptorHandler>
+            <handlerName>file-aggregator</handlerName>
+            <configuration>
+                <filePattern>otarules.btm</filePattern>
+                <outputPath>otarules.btm</outputPath>
+            </configuration>
+        </containerDescriptorHandler>
+    </containerDescriptorHandlers>
+</assembly>

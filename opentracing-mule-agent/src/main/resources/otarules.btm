@@ -1,0 +1,49 @@
+##################################################################################
+# java-mule-agent Rule Set
+##################################################################################
+
+HELPER io.opentracing.contrib.agent.OpenTracingHelper
+
+# This rule will add the reactor instrumentation classes to the MuleContainerSystemClassLoader
+# through a jar and load the rules within its resources. It will also register the reactor hooks.
+RULE MuleContainerSystemClassLoader.<init> - Load Reactor Instrumentation
+CLASS org.mule.runtime.module.reboot.internal.MuleContainerSystemClassLoader
+METHOD <init>
+AT EXIT
+IF TRUE
+DO
+  $0.addURL(new URL("file:" + System.getenv("OT_HOME") + "/lib/cl-mulecontainersystem.jar"));
+  io.opentracing.contrib.agent.OpenTracingManager.loadRules($0);
+  debug("mule-agent: added reactor instrumentation");
+  io.opentracing.contrib.mule.Utils.registerHooks($0, getTracer());
+  debug("mule-agent: instrumented reactor.core")
+ENDRULE
+
+# This rule will add the grizzly instrumentation classes to the HTTP Service MuleArtifactClassLoader
+# through a jar and loads the rules within its resources.
+RULE MuleArtifactClassLoader.<init> - Load Grizzly Instrumentation
+CLASS org.mule.runtime.module.artifact.api.classloader.MuleArtifactClassLoader
+METHOD <init>
+AT EXIT
+IF $0.getArtifactId().startsWith("service/HTTP")
+DO
+  $0.addURL(new URL("file:" + System.getenv("OT_HOME") + "/lib/cl-muleartifact-httpservice.jar"));
+  io.opentracing.contrib.agent.OpenTracingManager.loadRules($0);
+  debug("mule-agent: added grizzly instrumentation")
+ENDRULE
+
+# This rule instruments forces instrumentation of the Grizzly HTTP Server because it is constructed
+# in a way that the default rules do not consider applicable. This may become its own module if other rules
+# or custom classes become necessary.
+RULE FilterChainBuilder.build - Instrument Mule Grizzly Server
+CLASS ^org.glassfish.grizzly.filterchain.FilterChainBuilder
+METHOD FilterChain build()
+AT ENTRY
+IF NOT callerEquals("io.opentracing.contrib.grizzly.http.server.TracedFilterChainBuilder.build", true, true, 0, 2)
+  AND NOT callerEquals("io.opentracing.contrib.grizzly.http.server.TracedFilterChainBuilder.buildTracedChainFrom", true, true, 1, 1)
+  AND $0.indexOfType(org.mule.service.http.impl.service.server.grizzly.GrizzlyAddressDelegateFilter.class) != -1
+DO
+  io.opentracing.contrib.grizzly.http.server.TracedFilterChainBuilder.addServerFiltersTo($0.patternFilterChain, getTracer());
+  debug("mule-agent: instrumented mule custom grizzly server")
+ENDRULE
+

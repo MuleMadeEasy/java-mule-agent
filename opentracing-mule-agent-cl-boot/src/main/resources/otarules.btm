@@ -1,0 +1,28 @@
+HELPER io.opentracing.contrib.agent.OpenTracingHelper
+
+RULE ExecutorService.submit(Runnable)
+INTERFACE ^java.util.concurrent.ExecutorService
+METHOD submit(java.util.concurrent.Runnable)
+AT ENTRY
+IF getTracer().activeSpan() != null
+DO
+   $1 = new io.opentracing.contrib.concurrent.TracedRunnable($1, getTracer());
+ENDRULE
+
+RULE ExecutorService.submit(Runnable, Object)
+INTERFACE ^java.util.concurrent.ExecutorService
+METHOD submit(java.util.concurrent.Runnable, java.lang.Object)
+AT ENTRY
+IF getTracer().activeSpan() != null
+DO
+   $1 = new io.opentracing.contrib.concurrent.TracedRunnable($1, getTracer());
+ENDRULE
+
+RULE ExecutorService.submit(Callable)
+INTERFACE ^java.util.concurrent.ExecutorService
+METHOD submit(java.util.concurrent.Callable)
+AT ENTRY
+IF getTracer().activeSpan() != null
+DO
+   $1 = new io.opentracing.contrib.concurrent.TracedCallable($1, getTracer());
+ENDRULE

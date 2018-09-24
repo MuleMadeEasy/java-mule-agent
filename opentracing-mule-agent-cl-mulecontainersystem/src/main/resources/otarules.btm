@@ -1,0 +1,36 @@
+##################################################################################
+# java-mule-agent Rule Set - MuleContainerSystemClassLoader
+##################################################################################
+
+HELPER io.opentracing.contrib.agent.OpenTracingHelper
+
+# This rule will associate the active span with the passing MuleEvent's Context when the
+# FluxProcessor is an EventLoopProcessor because the ThreadLocal Scopes do not survive
+RULE EventLoopProcessor.onNext - Associate active span with Event.Context
+CLASS ^reactor.core.publisher.EventLoopProcessor
+METHOD onNext(Object)
+AT ENTRY
+IF getTracer().activeSpan() != null
+  AND io.opentracing.contrib.mule.Utils.isInstance(org.mule.runtime.api.event.Event.class, $1)
+DO
+  associateSpan(io.opentracing.contrib.mule.Utils.getEventContext($1), getTracer().activeSpan());
+  debug("mule-agent: associated active span with Mule.EventContext on Reactor.EventLoopProcessor.onNext")
+ENDRULE
+
+# This rule will activate check if there's an associated span with the passing MuleEvent and activate
+# that span only if there's no other available either from the reactor.Context or already active
+RULE ReactorProxy.onNextWithActiveSpan - Activate span associated with Event.Context
+CLASS io.opentracing.contrib.reactor.TracedSubscriber
+METHOD onNext(Object)
+AT ENTRY
+IF
+  io.opentracing.contrib.mule.Utils.isInstance(org.mule.runtime.api.event.Event.class, $1)
+  AND $0.span == null
+  AND getTracer().activeSpan() == null
+  AND retrieveSpan(io.opentracing.contrib.mule.Utils.getEventContext($1)) != null
+DO
+  io.opentracing.contrib.mule.Utils.onNextWithActiveSpan($0, $1, retrieveSpan(io.opentracing.contrib.mule.Utils.getEventContext($1)), getTracer());
+  debug("mule-agent: activated span associated with Mule.EventContext on TracedSubscriber.onNext");
+  RETURN
+ENDRULE
+

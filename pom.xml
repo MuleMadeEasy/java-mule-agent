@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.opentracing.contrib</groupId>
+    <artifactId>opentracing-mule-agent-parent</artifactId>
+    <version>0.1-SNAPSHOT</version>
+    <modules>
+        <module>opentracing-mule-agent-cl-boot</module>
+        <module>opentracing-mule-agent-cl-mulecontainersystem</module>
+        <module>opentracing-mule-agent</module>
+        <!--<module>opentracing-mule-agent-uber</module>-->
+    </modules>
+    <packaging>pom</packaging>
+
+    <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <version.opentracing>0.31.0</version.opentracing>
+        <version.opentracing.agent>0.4.0</version.opentracing.agent>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- OpenTracing Java Agent -->
+            <dependency>
+                <groupId>io.opentracing.contrib</groupId>
+                <artifactId>opentracing-agent</artifactId>
+                <version>${version.opentracing.agent}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+</project>
